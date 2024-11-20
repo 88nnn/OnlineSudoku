@@ -212,7 +212,7 @@ public class ResultChatClientGUI extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        SwingUtilities.invokeLater(() -> new MainMenuGUI("내 닉네임").setVisible(true)); // 닉네임 전달
+        SwingUtilities.invokeLater(() -> new MainMenuGUI().setVisible(true)); // 닉네임 전달
         dispose();
         exit(-1);
     }

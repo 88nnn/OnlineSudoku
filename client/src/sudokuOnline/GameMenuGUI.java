@@ -59,6 +59,9 @@ public class GameMenuGUI extends JFrame {
     private String nickname = "Player"; // Example nickname
 	private String password = "abcdef!2";
 
+    /**
+     * 
+     */
     public GameMenuGUI() {
     	setLayout(new BorderLayout());
         super("게임 설정");

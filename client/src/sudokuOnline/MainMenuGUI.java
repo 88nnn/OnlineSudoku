@@ -57,7 +57,10 @@ public class MainMenuGUI extends JFrame {
     private BufferedReader in;
     private Thread receiveThread;
 
-    public MainMenuGUI(String nickname) {
+    /**
+     * 
+     */
+    public MainMenuGUI() {
         this.nickname = nickname;
     	GameSessionManager session = GameSessionManager.getInstance();
         //String nickname = session.getNickname();
@@ -143,7 +146,7 @@ public class MainMenuGUI extends JFrame {
         // GameMenuGUI로 전환
         GameMenuGUI gameMenu = new GameMenuGUI();
         gameMenu.setVisible(true);
-        disconnectToServer(); // 설정 화면으로 이동할 때 서버 연결 종료
+        disconnect(); // 설정 화면으로 이동할 때 서버 연결 종료
         this.dispose();
     }
 
@@ -177,7 +180,7 @@ public class MainMenuGUI extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            MainMenuGUI mainMenu = new MainMenuGUI("테스트유저");
+            MainMenuGUI mainMenu = new MainMenuGUI();
             mainMenu.setVisible(true);
         });
     }
