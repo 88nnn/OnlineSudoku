@@ -53,9 +53,10 @@ public class ResultChatClientGUI extends JFrame {
     
     //BuildGUI: 초기화된 GUI와 서버 연결 생성
     public ResultChatClientGUI(String serverAddress, int serverPort) {
+        super("게임 결과");
     	GameSessionManager session = GameSessionManager.getInstance();
     	
-        super("게임 결과");
+        
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(600, 700);
         setLayout(new BorderLayout());

@@ -29,10 +29,9 @@ public class MatchingClientGUI extends JFrame {
 
     private int serverPort = 54321; // 서버 포트 기본값
     private Socket socket;
-    private BufferedWriter out;
+    private PrintWriter out;
     private BufferedReader in;
     private Thread receiveThread;
-
 	
     private JLabel statusLabel;
     private Timer timer;
@@ -40,10 +39,9 @@ public class MatchingClientGUI extends JFrame {
     private boolean isMatched = false;
 
     public MatchingClientGUI() {
-        super("매칭 대기 중");
-    	GameSessionManager session = GameSessionManager.getInstance();
+        super("대기 중");
     	String nickname = session.getNickname();
-    	out.PrintWriter("start_matching " + nickname);
+    	((PrintWriter) out).println("매칭 시작" + nickname);
         
         setSize(400, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -63,19 +61,15 @@ public class MatchingClientGUI extends JFrame {
     }
 
     private void startLoadingAnimation() {
-        timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                // 로딩 상태를 주기적으로 갱신
-                dotCount = (dotCount + 1) % 4; // 0, 1, 2, 3 반복
-                StringBuilder dots = new StringBuilder();
-                for (int i = 0; i < dotCount; i++) {
-                    dots.append(".");
-                }
-                statusLabel.setText("매칭 중" + dots);
+        timer = new Timer(500, e -> { // 로딩 상태를 주기적으로 갱신
+        	dotCount = (dotCount + 1) % 4;
+        	StringBuilder dots = new StringBuilder();
+        	for (int i = 0; i < dotCount; i++) {
+                dots.append(".");
             }
-        }, 0, 500); // 0.5초마다 실행
+            statusLabel.setText("매칭 중" + dots);
+        }); // 0.5초마다 실행
+        Timer.start();
     }
 
     private void simulateServerMatching() {
@@ -88,6 +82,38 @@ public class MatchingClientGUI extends JFrame {
             }
         }, 3000);
     }
+    
+    private void connectToServer() {
+        try {
+            socket = new Socket("localhost", serverPort);
+            out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            // 매칭 요청 보내기
+            String nickname = GameSessionManager.getInstance().getNickname();
+            out.println("start_matching " + nickname);
+
+            // 서버 응답 수신 시 매칭 완료 스레드 시작
+            receiveThread = new Thread(() -> {
+                try {
+                    String response;
+                    while ((response = in.readLine()) != null) {
+                        if (response.equals("matched")) {
+                            SwingUtilities.invokeLater(this::onMatchingSuccess);
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            receiveThread.start();
+
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "서버 연결 실패!", "오류", JOptionPane.ERROR_MESSAGE);
+            stopLoadingAnimation();
+        }
+    }
 
     private void onMatchingSuccess() {
         // 로딩 애니메이션 중지
@@ -95,16 +121,17 @@ public class MatchingClientGUI extends JFrame {
         statusLabel.setText("매칭 성공! 게임 화면으로 전환합니다...");
 
         // 3초 후 게임 화면으로 이동
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(() -> {
-                    GameClientGUI gameScreen = new GameClientGUI();
-                    gameScreen.setVisible(true);
-                    dispose();
-                });
-            }
-        }, 3000); // 준비 시간 3초
+        new Timer(3000, e -> {
+            GameClientGUI gameScreen = new GameClientGUI();
+            gameScreen.setVisible(true);
+            dispose();
+        }).setRepeats(false).start();
+    }
+    
+    private void stopLoadingAnimation() {
+        if (timer != null) {
+            timer.stop();
+        }
     }
 
     public static void main(String[] args) {
