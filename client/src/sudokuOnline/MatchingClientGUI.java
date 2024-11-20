@@ -16,33 +16,23 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Pattern;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+
 
 public class MatchingClientGUI extends JFrame {
 	GameSessionManager session = GameSessionManager.getInstance();
+
+    private int serverPort = 54321; // 서버 포트 기본값
+    private Socket socket;
+    private BufferedWriter out;
+    private BufferedReader in;
+    private Thread receiveThread;
+
 	
     private JLabel statusLabel;
     private Timer timer;
@@ -50,10 +40,11 @@ public class MatchingClientGUI extends JFrame {
     private boolean isMatched = false;
 
     public MatchingClientGUI() {
+        super("매칭 대기 중");
     	GameSessionManager session = GameSessionManager.getInstance();
     	String nickname = session.getNickname();
-    	out.println("start_matching " + nickname);
-        super("매칭 대기 중");
+    	out.PrintWriter("start_matching " + nickname);
+        
         setSize(400, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);

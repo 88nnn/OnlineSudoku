@@ -57,15 +57,11 @@ public class MainMenuGUI extends JFrame {
     private BufferedReader in;
     private Thread receiveThread;
 
-    /**
-     * 
-     */
     public MainMenuGUI() {
-        this.nickname = nickname;
+        super("메인 메뉴");
     	GameSessionManager session = GameSessionManager.getInstance();
         //String nickname = session.getNickname();
         
-        super("메인 메뉴");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // 화면 중앙에 위치
@@ -80,6 +76,7 @@ public class MainMenuGUI extends JFrame {
     
  // GUI 컴포넌트 초기화 메서드
     private void buildGUI() {
+        this.nickname = nickname;
         //int rankingScore = session.getRankingScore();
         //labelUsername.setText(nickname + "님, 환영합니다!");
         //labelRanking.setText("현재 랭킹 점수: " + rankingScore);

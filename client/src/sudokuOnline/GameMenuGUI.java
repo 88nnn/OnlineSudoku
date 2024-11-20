@@ -63,8 +63,9 @@ public class GameMenuGUI extends JFrame {
      * 
      */
     public GameMenuGUI() {
-    	setLayout(new BorderLayout());
         super("게임 설정");
+    	setLayout(new BorderLayout());
+        
         setSize(400, 300);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
