@@ -57,12 +57,11 @@ public class MainMenuGUI extends JFrame {
     private BufferedReader in;
     private Thread receiveThread;
 
-    public MainMenuGUI(String nickname) {
-        this.nickname = nickname;
+    public MainMenuGUI() {
+        super("메인 메뉴");
     	GameSessionManager session = GameSessionManager.getInstance();
         //String nickname = session.getNickname();
         
-        super("메인 메뉴");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // 화면 중앙에 위치
@@ -77,6 +76,7 @@ public class MainMenuGUI extends JFrame {
     
  // GUI 컴포넌트 초기화 메서드
     private void buildGUI() {
+        this.nickname = nickname;
         //int rankingScore = session.getRankingScore();
         //labelUsername.setText(nickname + "님, 환영합니다!");
         //labelRanking.setText("현재 랭킹 점수: " + rankingScore);
@@ -143,7 +143,7 @@ public class MainMenuGUI extends JFrame {
         // GameMenuGUI로 전환
         GameMenuGUI gameMenu = new GameMenuGUI();
         gameMenu.setVisible(true);
-        disconnectToServer(); // 설정 화면으로 이동할 때 서버 연결 종료
+        disconnect(); // 설정 화면으로 이동할 때 서버 연결 종료
         this.dispose();
     }
 
@@ -177,7 +177,7 @@ public class MainMenuGUI extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            MainMenuGUI mainMenu = new MainMenuGUI("테스트유저");
+            MainMenuGUI mainMenu = new MainMenuGUI();
             mainMenu.setVisible(true);
         });
     }
