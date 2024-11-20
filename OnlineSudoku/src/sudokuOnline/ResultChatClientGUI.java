@@ -3,6 +3,7 @@ import sudokuOnline.GameSessionManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -49,11 +50,12 @@ public class ResultChatClientGUI extends JFrame {
     private BufferedReader in;
     private PrintWriter out;
     private Timer updateTimer;
-
+    
+    //BuildGUI: 초기화된 GUI와 서버 연결 생성
     public ResultChatClientGUI(String serverAddress, int serverPort) {
     	GameSessionManager session = GameSessionManager.getInstance();
     	
-        setTitle("게임 결과 및 채팅");
+        super("게임 결과");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(600, 700);
         setLayout(new BorderLayout());
@@ -64,10 +66,12 @@ public class ResultChatClientGUI extends JFrame {
             out = new PrintWriter(socket.getOutputStream(), true);
 
             initializeUI();
-            startUpdateTimer();
+            startUpdateTimer(); //타이머 시작. (정기적인 인게임 데이터 갱신 기준)
 
         } catch (IOException e) {
-            e.printStackTrace();
+            //log.error("Exception [Err_Msg]: {}", e.geStxakTrace()[0]); //e.getMessage()
+            //thow new RuntimeException(e);
+        	e.printStackTrace();
         }
     }
 
@@ -77,7 +81,6 @@ public class ResultChatClientGUI extends JFrame {
         myStatsLabel = new JLabel("내 빈칸 수: 0 | 소요 시간: 0초");
         opponentStatsLabel = new JLabel("상대 빈칸 수: 0 | 소요 시간: 0초");
         resultLabel = new JLabel("결과: 승리!", SwingConstants.CENTER);
-        resultLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
         rankLabel = new JLabel("랭킹 점수: 0 (+0)", SwingConstants.CENTER);
 
         resultPanel.add(myStatsLabel);
@@ -136,14 +139,14 @@ public class ResultChatClientGUI extends JFrame {
     }
 
     private void updateGameStatus() {
-        out.println("status_update");
+        String response = in.readLine();
         try {
+        	out.println("status_update");
             String response = in.readLine();
-            if (response.startsWith("stats")) {
+            if (response != null && response.startsWith("stats")) {
                 String[] stats = response.split(" ");
                 myStatsLabel.setText("내 빈칸 수: " + stats[1] + " | 소요 시간: " + stats[2] + "초");
                 opponentStatsLabel.setText("상대 빈칸 수: " + stats[3] + " | 소요 시간: " + stats[4] + "초");
-
                 if (stats[5].equals("win")) {
                     resultLabel.setText("결과: 승리!");
                     rankLabel.setText("랭킹 점수: " + stats[6] + " (+1)");
@@ -154,18 +157,20 @@ public class ResultChatClientGUI extends JFrame {
                     rankLabel.setText("랭킹 점수: " + stats[6] + " (+0)");
                     session.recordLoss();
                 }
-            } else if (response.startsWith("chat")) {
+            } response != null && response.startsWith("chat")) {
                 chatArea.append(response.substring(5) + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
+            System.err.println("게임 결과 업데이트 오류: " + e.getMessage());
+            System.exit(-1);
         }
     }
 
     private void sendChatMessage() {
         String message = chatInput.getText().trim();
         if (!message.isEmpty()) {
-            out.println("chat " + message);
+            out.println("chat " + message); //서버로 채팅 메시지 전송(객체화해 구현)
             chatInput.setText("");
         }
     }
@@ -179,13 +184,13 @@ public class ResultChatClientGUI extends JFrame {
         emojiFrame.setSize(300, 200);
         emojiFrame.setLayout(new GridLayout(2, 4, 10, 10)); // 2행 4열, 간격 10px
         emojiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        //이모지 전송 관련 기능만 관리하는 함수이므로, 모든 창을 닫아버리는 exit이 아니라 선택된 프레임 하나만 닫는 dispose 선택.
 
         for (String emoji : emojis) {
             JButton emojiButton = new JButton(emoji);
-            emojiButton.setFont(new Font("SansSerif", Font.PLAIN, 24));
             emojiButton.addActionListener(e -> {
                 out.println("chat " + emoji);
-                emojiFrame.dispose(); // 선택 후 창 닫기
+                emojiFrame.dispose(); // 선택 후 이모지 창만 닫기
             });
             emojiFrame.add(emojiButton);
         }
@@ -196,34 +201,36 @@ public class ResultChatClientGUI extends JFrame {
 
 
     private void exitToMainMenu() {
-    	GameSessionManager session = GameSessionManager.getInstance();
+    	GameSessionManager session = GameSessionManager.getInstance(); //게임 세션 매니저로 인스턴스 관리
     	session.resetSession();
     	// 메인 메뉴로 이동
     	dispose();
-        updateTimer.cancel();
+        updateTimer.cancel(); //화면 갱신할 필요 없어졌으니 타이머 종료
         try {
             out.println("exit");
-            socket.close();
+            socket.close(); //해당 매칭과의 연결 종료
         } catch (IOException e) {
             e.printStackTrace();
         }
         SwingUtilities.invokeLater(() -> new MainMenuGUI("내 닉네임").setVisible(true)); // 닉네임 전달
         dispose();
+        exit(-1);
     }
 
 
     private void connectToMatchingScreen() {
     	GameSessionManager session = GameSessionManager.getInstance();
     	// 매칭 화면으로 이동
-        updateTimer.cancel();
+        updateTimer.cancel(); //화면 갱신할 필요 없어졌으니 타이머 종료
         try {
             out.println("next_game");
-            socket.close();
+            socket.close(); //해당 매칭과의 연결 종료
         } catch (IOException e) {
             e.printStackTrace();
         }
         SwingUtilities.invokeLater(() -> new MatchingClientGUI("내 닉네임").setVisible(true)); // 닉네임 전달
-        dispose();
+        //dispose();
+        exit(-1);
     }
 
     public static void main(String[] args) {

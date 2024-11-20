@@ -42,7 +42,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 @SuppressWarnings("serial")
-public class GameMenuGUI<EXIT_ON_CLOSE> extends JFrame {
+public class GameMenuGUI extends JFrame {
+	GameSessionManager session = GameSessionManager.getInstance();
     private JLabel rankLabel;
     private JTextField nicknameField;
     private JLabel userIdLabel;
@@ -60,7 +61,7 @@ public class GameMenuGUI<EXIT_ON_CLOSE> extends JFrame {
 
     public GameMenuGUI() {
     	setLayout(new BorderLayout());
-        setTitle("게임 메뉴");
+        super("게임 설정");
         setSize(400, 300);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 

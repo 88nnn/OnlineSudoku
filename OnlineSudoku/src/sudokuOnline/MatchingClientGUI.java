@@ -3,6 +3,7 @@ import sudokuOnline.GameSessionManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -41,6 +42,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 public class MatchingClientGUI extends JFrame {
+	GameSessionManager session = GameSessionManager.getInstance();
+	
     private JLabel statusLabel;
     private Timer timer;
     private int dotCount = 0;
@@ -50,7 +53,7 @@ public class MatchingClientGUI extends JFrame {
     	GameSessionManager session = GameSessionManager.getInstance();
     	String nickname = session.getNickname();
     	out.println("start_matching " + nickname);
-        setTitle("매칭 대기 중");
+        super("매칭 대기 중");
         setSize(400, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);

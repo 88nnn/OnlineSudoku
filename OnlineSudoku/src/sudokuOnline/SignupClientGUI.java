@@ -40,7 +40,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-public class SignupClientGUI extends JPanel {
+public class SignupClientGUI extends JFrame {
     private JTextField userIdField;
     private JTextField nicknameField;
     private JPasswordField passwordField;
@@ -60,7 +60,7 @@ public class SignupClientGUI extends JPanel {
 
         // 메인 패널
         JPanel mainPanel = new JPanel(new GridLayout(4, 3, 10, 10));
-        mainPanel.setBorder(BorderFactory.createTitledBorder("회원가입"));
+        mainPanel.setBorder(BorderFactory.createTitledBorder("Sudoku Online - 회원가입"));
 
         // 아이디 입력
         mainPanel.add(new JLabel("아이디:"));
