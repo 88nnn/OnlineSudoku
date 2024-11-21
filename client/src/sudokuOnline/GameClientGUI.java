@@ -115,6 +115,27 @@ public class GameClientGUI extends JFrame {
         }
         return panel;
     }
+    
+    private boolean isValidSudokuInput(int row, int col, int value) {
+        for (int i = 0; i < 9; i++) {
+            // 행과 열 확인
+            if (board[row][i].getText().equals(String.valueOf(value)) || board[i][col].getText().equals(String.valueOf(value))) {
+                return false;
+            }
+        }
+        // 큰 박스(3x3)에 기입된 값 내, 입력값과 동일한 수가 없는지(1~9 중 하나씩만 사용되었는지) 여부 확인
+        int startRow = (row / 3) * 3;
+        int startCol = (col / 3) * 3;
+        for (int i = startRow; i < startRow + 3; i++) {
+            for (int j = startCol; j < startCol + 3; j++) {
+                if (board[i][j].getText().equals(String.valueOf(value))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
     /**
      * 서버 연결 초기화
@@ -178,7 +199,7 @@ public class GameClientGUI extends JFrame {
         out.println(row + " " + col + " " + value); // 좌표와 값을 전송
         try {
             String response = in.readLine(); // 서버 응답
-            if ("correct".equals(response)) {
+            if ("correctness".equals(response)) {
                 board[row][col].setForeground(Color.BLUE); // 올바른 입력일 경우 색상 변경
                 board[row][col].setEditable(false);
                 emptyCellsCount--;
@@ -212,20 +233,22 @@ public class GameClientGUI extends JFrame {
      * 서버에 현재 상태 전송
      * - 남은 빈칸 수와 경과 시간을 전송.
      */
+    
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private void sendState() {
-    	new Thread(() -> {
+    	executor.submit(() -> {
+    	//new Thread(() -> {
     		out.println("update " + emptyCellsCount + " " + elapsedTime); // 상태 전송
             try {
                 String response = in.readLine(); // 서버 응답
                 if (response.startsWith("opponentEmptyCells")) {
-                	/*
+                	
                 	int opponentCount = Integer.parseInt(response.split(" ")[1]);
-                    SwingUtilities.invokeLater(() -> opponentEmptyCellsLabel.setText("상대 빈칸 수: " + opponentCount));
-                	 */
-                    opponentEmptyCellsCount = Integer.parseInt(response.split(" ")[1]);
+                    //SwingUtilities.invokeLater(() -> opponentEmptyCellsLabel.setText("상대 빈칸 수: " + opponentCount));
                     opponentEmptyCellsLabel.setText("상대 빈칸 수: " + opponentEmptyCellsCount);
                 }
             } catch (IOException e) {
+            	logger.log(Level.SEVERE, "서버 통신 오류", e);
                 e.printStackTrace();
             }
         }).start();
@@ -264,9 +287,11 @@ public class GameClientGUI extends JFrame {
         try {
             FileHandler fh = new FileHandler("game_logs.log", true);
             fh.setFormatter(new SimpleFormatter());
+            logger.setUseParentHandlers(false);
             logger.addHandler(fh);
             //logger.setLevel(Level.ALL);
         } catch (IOException e) {
+        	System.err.println("로거 초기화 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }

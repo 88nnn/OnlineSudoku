@@ -71,13 +71,20 @@ public class MainMenuGUI extends JFrame {
         JPanel levelPanel = new JPanel(new FlowLayout());
         JCheckBox easyCheck = new JCheckBox("쉬움");
         JCheckBox hardCheck = new JCheckBox("어려움");
-
+        
+        // 둘 중 하나만 선택 가능하게 토글 효과 부여
         ButtonGroup levelGroup = new ButtonGroup();
         levelGroup.add(easyCheck);
         levelGroup.add(hardCheck);
-
+        
+        // 패널에 난이도 체크박스 삽입
         levelPanel.add(easyCheck);
         levelPanel.add(hardCheck);
+        
+        // 난이도 선택 전까지 매칭 진입(버튼 클릭) 불가
+        easyCheck.addActionListener(e -> b_matchStart.setEnabled(true));
+        hardCheck.addActionListener(e -> b_matchStart.setEnabled(true));
+
         add(levelPanel, BorderLayout.CENTER);
 
         // 버튼 패널
@@ -94,22 +101,26 @@ public class MainMenuGUI extends JFrame {
     
  // 서버 연결 메서드
     private void connectToServer() throws IOException {
-        try {
-            // 서버 소켓 연결 생성
-            socket = new Socket(serverAddress, serverPort);
-            out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-            System.out.println("서버에 연결되었습니다.");
-        } catch (IOException e) {
-            // 서버 연결 실패 시 예외 처리 및 메시지 표시
-        	int retry = JOptionPane.showConfirmDialog(this, "서버 연결 실패. 재시도 하시겠습니까?", "오류", JOptionPane.YES_NO_OPTION);
-        	if (retry == JOptionPane.YES_OPTION) {
-                connectToServer();
-            } else {
-                JOptionPane.showMessageDialog(this, "서버 연결을 종료합니다.", "오류", JOptionPane.ERROR_MESSAGE);
-                System.exit(0);
+    	for (int i = 0; i < 5; i++) {
+    		try {
+                // 서버 소켓 연결 생성
+                socket = new Socket(serverAddress, serverPort);
+                out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+                //System.out.println("서버에 연결되었습니다.");
+                JOptionPane.showMessageDialog(this, "서버에 성공적으로 연결되었습니다.", "연결 성공", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            } catch (IOException e) {
+                // 서버 연결 실패 시 예외 처리 및 메시지 표시
+            	int retry = JOptionPane.showConfirmDialog(this, "서버 연결 실패. 재시도 하시겠습니까?", "오류", JOptionPane.YES_NO_OPTION);
+            	if (retry == JOptionPane.YES_OPTION) {
+                    connectToServer();
+                } else {
+                    JOptionPane.showMessageDialog(this, "서버 연결을 종료합니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                    System.exit(0);
+                }
             }
-        }
+    	}
     }
     
  // 서버 연결 종료 메서드
@@ -129,37 +140,59 @@ public class MainMenuGUI extends JFrame {
  // 매칭 시작 메서드
  private void matchingStart(boolean easySelected, boolean hardSelected) {
         // 사용자가 선택한 난이도 가져오기
-    	String selectedLevel = null; // 사용자가 선택한 난이도 가져오기
+    	String selectedLevel = easySelected ? "쉬움" : hardSelected ? "어려움" : null; // 사용자가 선택한 난이도 가져오기
     	
-    	if (easySelected()) {
-            selectedLevel = "쉬움";
-        } else if (hardSelected()) {
-            selectedLevel = "어려움";
-        } else {
+    	if (selectedLevel == null) {
             JOptionPane.showMessageDialog(this, "난이도를 선택해 주세요.", "오류", JOptionPane.ERROR_MESSAGE);
             return;
+        } else if (!easySelected && !hardSelected) {
+    	    JOptionPane.showMessageDialog(this, "난이도가 선택되지 않었습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+    	    return;
+    	} else if (easyCheck) {
+            selectedLevel = "쉬움";
+        } else if (hardCheck) {
+            selectedLevel = "어려움";
+        } else {
+            JOptionPane.showMessageDialog(this, "올바르지 못한 접근입니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-
+    	
         if (selectedLevel != null) {
-            try {
-                // 서버로 닉네임과 난이도 데이터 전송
-            if (socket != null && socket.isConnected()) {
-                out.write("닉네임:" + nickname + ", 난이도:" + selectedLevel + "\n");
-                out.flush();
-                System.out.println("매칭 요청 전송: \n" + nickname + ", 난이도(" + selectedLevel + ")");
-            } else {
-                System.err.println("서버 연결 실패: " + e.getMessage());
-                //JOptionPane.showMessageDialog(this, "서버와 연결되어 있지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
-                return;
-            } //JOptionPane.showMessageDialog(this, "서버 전송 중 오류 발생: " + e.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
-            
-            // 서버 응답 대기 중 출력
-            JOptionPane.showMessageDialog(this, "서버와 연결 중... 잠시 기다려 주세요.", "매칭 진행", JOptionPane.INFORMATION_MESSAGE);
-            // 대기창으로 전환
-            MatchingClientGUI matchingClient = new MatchingClientGUI();
-            matchingClient.setVisible(true);
-            this.dispose();
-            }
+        	SwingWorker<Void, Void> worker = new SwingWorker<>() {
+        		@Override
+                protected Void doInBackground() throws Exception {
+        			try {
+                        // 서버로 닉네임과 난이도 데이터 전송
+                    if (socket != null && socket.isConnected()) {
+                        out.write("닉네임:" + nickname + ", 난이도:" + selectedLevel + "\n");
+                        out.flush();
+                        System.out.println("매칭 요청 전송: \n" + nickname + ", 난이도(" + selectedLevel + ")");
+                    } else {
+                        System.err.println("서버 연결 실패: " + e.getMessage());
+                        //JOptionPane.showMessageDialog(this, "서버와 연결되어 있지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } //JOptionPane.showMessageDialog(this, "서버 전송 중 오류 발생: " + e.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+                    
+                    // 서버 응답 대기 중 출력
+                    JOptionPane.showMessageDialog(this, "서버와 연결 중... 잠시 기다려 주세요.", "매칭 진행", JOptionPane.INFORMATION_MESSAGE);
+                    // 대기창으로 전환
+                    MatchingClientGUI matchingClient = new MatchingClientGUI();
+                    matchingClient.setVisible(true);
+                    this.dispose();
+        			} catch (IOException e) {
+                        JOptionPane.showMessageDialog(MainMenuGUI.this, "서버와 연결되어 있지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                    }
+                    return null;
+        		}
+                
+                @Override
+                protected void done() {
+                    MatchingClientGUI matchingClient = new MatchingClientGUI();
+                    matchingClient.setVisible(true);
+                    MainMenuGUI.this.dispose();
+                }
+        	};
+        	worker.execute();
         }
     }
 

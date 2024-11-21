@@ -23,7 +23,6 @@ import java.util.TimerTask;
 import java.util.regex.Pattern;
 
 
-
 public class MatchingClientGUI extends JFrame {
 	GameSessionManager session = GameSessionManager.getInstance();
 
@@ -69,9 +68,10 @@ public class MatchingClientGUI extends JFrame {
             }
             statusLabel.setText("매칭 중" + dots);
         }); // 0.5초마다 실행
-        Timer.start();
+        timer.start();
     }
 
+    /*
     private void simulateServerMatching() {
         // 서버 매칭 상태 시뮬레이션 (3초 후 매칭 완료)
         new Timer().schedule(new TimerTask() {
@@ -82,8 +82,10 @@ public class MatchingClientGUI extends JFrame {
             }
         }, 3000);
     }
+    */
     
     private void connectToServer() {
+    	new Thread(() -> {
         try {
             socket = new Socket("localhost", serverPort);
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
@@ -91,7 +93,7 @@ public class MatchingClientGUI extends JFrame {
 
             // 매칭 요청 보내기
             String nickname = GameSessionManager.getInstance().getNickname();
-            out.println("start_matching " + nickname);
+            out.println("매칭 시작 " + nickname);
 
             // 서버 응답 수신 시 매칭 완료 스레드 시작
             receiveThread = new Thread(() -> {
@@ -108,11 +110,19 @@ public class MatchingClientGUI extends JFrame {
                 }
             });
             receiveThread.start();
-
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "서버 연결 실패!", "오류", JOptionPane.ERROR_MESSAGE);
             stopLoadingAnimation();
         }
+    	}).start();
+    }
+    
+    @Override
+    public void dispose() {
+        if (receiveThread != null && receiveThread.isAlive()) {
+            receiveThread.interrupt();
+        }
+        super.dispose();
     }
 
     private void onMatchingSuccess() {
