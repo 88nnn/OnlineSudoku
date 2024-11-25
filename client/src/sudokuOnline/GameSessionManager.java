@@ -6,7 +6,7 @@ public class GameSessionManager {
     private static volatile GameSessionManager instance;
 
     // 사용자 정보
-    private String nickname;      // 사용자 닉네임
+    private String nickname = "유저";    // 사용자 닉네임
     private int score;     // 랭킹 점수
     private int wins;             // 승리 횟수
     private int losses;           // 패배 횟수

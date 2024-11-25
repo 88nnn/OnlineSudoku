@@ -1,12 +1,13 @@
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class MainMenuGUI {
+public class MainMenu {
     private ServerSocket serverSocket;
     private List<ClientHandler> clients; // 클라이언트 목록
 
-    public MainMenuGUI(int port) {
+    public MainMenu(int port) {
         try {
             serverSocket = new ServerSocket(port);
             clients = new ArrayList<>();
@@ -107,7 +108,7 @@ public class MainMenuGUI {
 
     public static void main(String[] args) {
         int port = 54321; // 클라이언트와 동일한 포트 설정
-        MainMenuGUI server = new  MainMenuGUI(port);
+        MainMenu server = new  MainMenu(port);
         server.start();
     }
 }

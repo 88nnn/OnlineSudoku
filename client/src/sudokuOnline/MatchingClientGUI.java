@@ -1,28 +1,24 @@
 // MainMenuGUI <--  --> GameClientGUI
 
 package sudokuOnline;
-import sudokuOnline.GameSessionManager;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.net.ServerSocket;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Pattern;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+
+import sudokuOnline.GameSessionManager;
 
 
 public class MatchingClientGUI extends JFrame {
@@ -35,14 +31,15 @@ public class MatchingClientGUI extends JFrame {
     private Thread receiveThread;
 	
     private JLabel statusLabel;
-    private Timer timer;
-    private int dotCount = 0;
-    private boolean isMatched = false;
+    private javax.swing.Timer timer;
+    private int loadot = 0;
+    private boolean Matched = false;
 
     public MatchingClientGUI() {
         super("대기 중");
     	String nickname = session.getNickname();
-    	((PrintWriter) out).println("매칭 시작" + nickname);
+    	nickname = "유저";
+    	//out.println("매칭 시작" + nickname);
         
         setSize(400, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -51,40 +48,26 @@ public class MatchingClientGUI extends JFrame {
 
         // 매칭 대기 상태 표시 라벨
         statusLabel = new JLabel("매칭 중", SwingConstants.CENTER);
-        statusLabel.setFont(new Font("Arial", Font.BOLD, 18));
         add(statusLabel, BorderLayout.CENTER);
 
         // 로딩 애니메이션 시작
         startLoadingAnimation();
 
-        // 서버로부터 매칭 완료 상태를 가정
-        simulateServerMatching();
+        // 서버로부터 매칭
+        connectToServer();
     }
 
     private void startLoadingAnimation() {
-        timer = new Timer(500, e -> { // 로딩 상태를 주기적으로 갱신
-        	dotCount = (dotCount + 1) % 4;
+    	timer = new javax.swing.Timer(500, e -> { // 로딩 상태를 주기적으로 갱신
+        	loadot = (loadot + 1) % 4;
         	StringBuilder dots = new StringBuilder();
-        	for (int i = 0; i < dotCount; i++) {
+        	for (int i = 0; i < loadot; i++) {
                 dots.append(".");
             }
             statusLabel.setText("매칭 중" + dots);
         }); // 0.5초마다 실행
         timer.start();
     }
-
-    /*
-    private void simulateServerMatching() {
-        // 서버 매칭 상태 시뮬레이션 (3초 후 매칭 완료)
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                isMatched = true;
-                onMatchingSuccess();
-            }
-        }, 3000);
-    }
-    */
     
     private void connectToServer() {
     	new Thread(() -> {
@@ -103,7 +86,7 @@ public class MatchingClientGUI extends JFrame {
                     String response;
                     while ((response = in.readLine()) != null) {
                         if (response.equals("matched")) {
-                            SwingUtilities.invokeLater(this::onMatchingSuccess);
+                            SwingUtilities.invokeLater(this::matchingSuccess);
                             break;
                         }
                     }
@@ -114,36 +97,23 @@ public class MatchingClientGUI extends JFrame {
             receiveThread.start();
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "서버 연결 실패!", "오류", JOptionPane.ERROR_MESSAGE);
-            stopLoadingAnimation();
+            if (timer != null) {timer.stop();}
         }
     	}).start();
     }
-    
-    @Override
-    public void dispose() {
-        if (receiveThread != null && receiveThread.isAlive()) {
-            receiveThread.interrupt();
-        }
-        super.dispose();
-    }
 
-    private void onMatchingSuccess() {
+    private void matchingSuccess() {
         // 로딩 애니메이션 중지
-        timer.cancel();
+    	if (timer != null) {timer.stop();}
         statusLabel.setText("매칭 성공! 게임 화면으로 전환합니다...");
 
         // 3초 후 게임 화면으로 이동
-        new Timer(3000, e -> {
-            GameClientGUI gameScreen = new GameClientGUI();
+        /*timer = new javax.swing.Timer(3000, e -> {
+        	GameClientGUI gameScreen = new GameClientGUI();
             gameScreen.setVisible(true);
             dispose();
         }).setRepeats(false).start();
-    }
-    
-    private void stopLoadingAnimation() {
-        if (timer != null) {
-            timer.stop();
-        }
+    }*/
     }
 
     public static void main(String[] args) {

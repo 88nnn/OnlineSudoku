@@ -15,7 +15,10 @@ import java.net.*;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.FileHandler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import javax.swing.*;
@@ -267,7 +270,7 @@ public class GameClientGUI extends JFrame {
             protected Void doInBackground() {
                 try {
                     String response = in.readLine();
-                    publish(response); // Pass data to the `process` method
+                    publish(response);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
