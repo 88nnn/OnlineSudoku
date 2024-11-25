@@ -1,3 +1,5 @@
+// MainMenuGUI <--  --> GameClientGUI
+
 package sudokuOnline;
 import sudokuOnline.GameSessionManager;
 

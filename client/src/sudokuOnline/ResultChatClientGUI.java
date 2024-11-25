@@ -1,3 +1,6 @@
+// GameClientGUI <--  --> MatchingClientGUI
+// --> MainMenuGUI
+
 package sudokuOnline;
 import sudokuOnline.GameSessionManager;
 
@@ -51,7 +54,6 @@ public class ResultChatClientGUI extends JFrame {
     private PrintWriter out;
     private Timer updateTimer;
     
-    //BuildGUI: 초기화된 GUI와 서버 연결 생성
     public ResultChatClientGUI(String serverAddress, int serverPort) {
         super("게임 결과");
     	GameSessionManager session = GameSessionManager.getInstance();
@@ -67,7 +69,7 @@ public class ResultChatClientGUI extends JFrame {
             out = new PrintWriter(socket.getOutputStream(), true);
 
             initializeUI();
-            startUpdateTimer(); //타이머 시작. (정기적인 인게임 데이터 갱신 기준)
+            startUpdateTimer(); //타이머 시작. (정기적인 인게임 데이터 갱신)
 
         } catch (IOException e) {
             //log.error("Exception [Err_Msg]: {}", e.geStxakTrace()[0]); //e.getMessage()
@@ -151,12 +153,12 @@ public class ResultChatClientGUI extends JFrame {
                 if (stats[5].equals("win")) {
                     resultLabel.setText("결과: 승리!");
                     rankLabel.setText("랭킹 점수: " + stats[6] + " (+1)");
-                    session.recordWin();
+                    session.addWin();
                 	session.setRankingScore(session.getRankingScore() + 1);
                 } else if (stats[5].equals("lose")) {
                     resultLabel.setText("결과: 패배!");
                     rankLabel.setText("랭킹 점수: " + stats[6] + " (+0)");
-                    session.recordLoss();
+                    session.addLoss();
                 }
             } response != null && response.startsWith("chat")) {
                 chatArea.append(response.substring(5) + "\n");
@@ -195,7 +197,7 @@ public class ResultChatClientGUI extends JFrame {
             });
             emojiFrame.add(emojiButton);
         }
-
+        //가시성 좋게 정중앙 출력으로 결정
         emojiFrame.setLocationRelativeTo(this);
         emojiFrame.setVisible(true);
     }
@@ -204,7 +206,7 @@ public class ResultChatClientGUI extends JFrame {
     private void exitToMainMenu() {
     	GameSessionManager session = GameSessionManager.getInstance(); //게임 세션 매니저로 인스턴스 관리
     	session.resetSession();
-    	// 메인 메뉴로 이동
+    	// 메인 메뉴로 이동할 거니까 세션 내 인스턴스 정보 정리
     	dispose();
         updateTimer.cancel(); //화면 갱신할 필요 없어졌으니 타이머 종료
         try {
@@ -212,7 +214,7 @@ public class ResultChatClientGUI extends JFrame {
             socket.close(); //해당 매칭과의 연결 종료
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        } //결과 화면 종료 후 다음 화면으로 전환시키기 위해 스레드 분리+다음 화면 출력 스윙 나중에 실행되게끔 설정
         SwingUtilities.invokeLater(() -> new MainMenuGUI().setVisible(true)); // 닉네임 전달
         dispose();
         exit(-1);
@@ -230,7 +232,7 @@ public class ResultChatClientGUI extends JFrame {
             e.printStackTrace();
         }
         SwingUtilities.invokeLater(() -> new MatchingClientGUI("내 닉네임").setVisible(true)); // 닉네임 전달
-        //dispose();
+        dispose();
         exit(-1);
     }
 
