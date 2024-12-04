@@ -4,5 +4,5 @@
 /**
  * 
  */
-module OnlineSudoku {
+module SudokuMaster1 {
 }

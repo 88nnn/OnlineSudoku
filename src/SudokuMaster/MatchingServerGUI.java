@@ -1,16 +1,17 @@
 
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class MainMenu {
+public class MatchingServerGUI {
     private ServerSocket serverSocket;
-    private List<ClientHandler> clients; // 클라이언트 목록
+    private List<ClientHandler> waitingClients; // 매칭 대기 중인 클라이언트 목록
 
-    public MainMenu(int port) {
+    public MatchingServerGUI(int port) {
         try {
             serverSocket = new ServerSocket(port);
-            clients = new ArrayList<>();
+            waitingClients = new ArrayList<>();
             System.out.println("매칭 서버가 포트 " + port + "에서 시작되었습니다.");
         } catch (IOException e) {
             System.err.println("서버 소켓 생성 중 오류 발생: " + e.getMessage());
@@ -27,7 +28,7 @@ public class MainMenu {
 
                 // 새 클라이언트를 처리할 핸들러 생성
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
-                clients.add(clientHandler); // 클라이언트 목록에 추가
+                waitingClients.add(clientHandler); // 클라이언트 목록에 추가
 
                 // 핸들러를 별도의 스레드로 실행
                 new Thread(clientHandler).start();
@@ -43,7 +44,6 @@ public class MainMenu {
         private BufferedReader in;
         private BufferedWriter out;
         private String nickname; // 클라이언트 닉네임
-        private String difficulty; // 클라이언트가 선택한 난이도
 
         public ClientHandler(Socket clientSocket) {
             this.clientSocket = clientSocket;
@@ -59,24 +59,18 @@ public class MainMenu {
         public void run() {
             try {
                 // 클라이언트로부터 데이터 수신
-                String request;
-                while ((request = in.readLine()) != null) {
-                    System.out.println("클라이언트 요청 수신: " + request);
+                String request = in.readLine(); // 매칭 요청 수신
+                System.out.println("클라이언트 요청 수신: " + request);
 
-                    // 요청 데이터 파싱
-                    if (request.startsWith("닉네임:")) {
-                        String[] parts = request.split(", ");
-                        this.nickname = parts[0].split(":")[1].trim();
-                        this.difficulty = parts[1].split(":")[1].trim();
+                if (request.startsWith("start_matching")) {
+                    this.nickname = request.split(" ")[1]; // 닉네임 추출
+                    System.out.println("매칭 요청 닉네임: " + nickname);
 
-                        System.out.println("닉네임: " + nickname + ", 난이도: " + difficulty);
-
-                        // 매칭 처리
-                        matchClient();
-                    } else {
-                        out.write("알 수 없는 요청입니다: " + request + "\n");
-                        out.flush();
-                    }
+                    // 매칭 처리 시작
+                    matchClient();
+                } else {
+                    out.write("알 수 없는 요청입니다: " + request + "\n");
+                    out.flush();
                 }
             } catch (IOException e) {
                 System.err.println("클라이언트 처리 중 오류 발생: " + e.getMessage());
@@ -87,9 +81,15 @@ public class MainMenu {
 
         // 클라이언트 매칭 처리
         private void matchClient() throws IOException {
-            // 단순 매칭 시뮬레이션
-            out.write("매칭이 시작되었습니다! 난이도: " + difficulty + "\n");
-            out.flush();
+            try {
+                // 매칭 대기 (3초 대기 후 매칭 성공 시뮬레이션)
+                Thread.sleep(3000);
+                out.write("matching_success\n"); // 매칭 성공 신호 전송
+                out.flush();
+                System.out.println("매칭 성공 신호 전송 완료: " + nickname);
+            } catch (InterruptedException e) {
+                System.err.println("매칭 처리 중 오류 발생: " + e.getMessage());
+            }
         }
 
         // 클라이언트 연결 해제
@@ -102,13 +102,13 @@ public class MainMenu {
             } catch (IOException e) {
                 System.err.println("클라이언트 연결 해제 중 오류 발생: " + e.getMessage());
             }
-            clients.remove(this);
+            waitingClients.remove(this);
         }
     }
 
     public static void main(String[] args) {
         int port = 54321; // 클라이언트와 동일한 포트 설정
-        MainMenu server = new  MainMenu(port);
+        MatchingServerGUI server = new MatchingServerGUI(port);
         server.start();
     }
 }
